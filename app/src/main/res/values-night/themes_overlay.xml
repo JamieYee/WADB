@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="ThemeOverlay.Green" parent="ThemeOverlay.Green.Dark"/>
+    <style name="ThemeOverlay.Green" />
 
-    <style name="ThemeOverlay.Pink" parent="ThemeOverlay.Pink.Dark"/>
+    <style name="ThemeOverlay.Pink" />
 
 </resources>

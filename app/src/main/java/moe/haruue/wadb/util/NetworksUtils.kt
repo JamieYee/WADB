@@ -1,54 +1,46 @@
-package moe.haruue.wadb.util;
+package moe.haruue.wadb.util
 
-import android.content.Context;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.system.OsConstants;
-import android.util.Log;
+import android.content.Context
+import android.net.wifi.WifiManager
+import android.system.OsConstants
+import android.util.Log
 
-import java.util.ArrayList;
-import java.util.List;
+object NetworksUtils {
+    private val tag = NetworksUtils::class.java.simpleName
 
-public class NetworksUtils {
-    private static final String TAG = NetworksUtils.class.getSimpleName();
-
-    public static String getLocalIPAddress(Context context) {
-        List<LibWADB.InterfaceIPPair> ipInfoList = getLocalIPInfo(context);
-        if (ipInfoList.isEmpty()) {
-            return "";
-        }
-        return ipInfoList.get(0).getIp();
+    @JvmStatic
+    fun getLocalIPAddress(context: Context): String {
+        return getLocalIPInfo(context).firstOrNull()?.ip.orEmpty()
     }
 
-    public static List<LibWADB.InterfaceIPPair> getLocalIPInfo(Context context) {
-        List<LibWADB.InterfaceIPPair> result = null;
+    @JvmStatic
+    fun getLocalIPInfo(context: Context): List<LibWADB.InterfaceIPPair> {
         try {
-            result = LibWADB.getInterfaceIps(false);
-        } catch (Exception e) {
-            Log.e(TAG, "getLocalIPInfo: LibWADB.getInterfaceIps() failed", e);
+            return LibWADB.getInterfaceIps(false)
+        } catch (e: Exception) {
+            Log.e(tag, "getLocalIPInfo: LibWADB.getInterfaceIps() failed", e)
         }
 
-        if (result != null) {
-            return result;
+        val wifiManager = context.applicationContext.getSystemService(WifiManager::class.java) ?: return emptyList()
+        @Suppress("DEPRECATION")
+        val wifiInfo = wifiManager.connectionInfo
+        @Suppress("DEPRECATION")
+        val ipAddress = wifiInfo.ipAddress
+        if (ipAddress == 0) {
+            return emptyList()
         }
 
-        // fallback to the legacy way
-        result = new ArrayList<>();
-        WifiManager wifiManger = context.getApplicationContext().getSystemService(WifiManager.class);
-        if (wifiManger == null) {
-            return result;
-        }
-        WifiInfo wifiInfo = wifiManger.getConnectionInfo();
-        if (wifiInfo.getIpAddress() != 0) {
-            LibWADB.InterfaceIPPair info = new LibWADB.InterfaceIPPair(0, (byte) OsConstants.AF_INET, "wlan0", intToIp(wifiInfo.getIpAddress()));
-            result.add(info);
-        }
-        return result;
+        return listOf(
+            LibWADB.InterfaceIPPair(
+                0,
+                OsConstants.AF_INET,
+                "wlan0",
+                intToIp(ipAddress),
+            ),
+        )
     }
 
-
-    private static String intToIp(int i) {
-        return (i & 0xFF) + "." + ((i >> 8) & 0xFF) + "." + ((i >> 16) & 0xFF) + "." + (i >> 24 & 0xFF);
+    private fun intToIp(value: Int): String {
+        return "${value and 0xFF}.${value shr 8 and 0xFF}.${value shr 16 and 0xFF}.${value shr 24 and 0xFF}"
     }
-
 }

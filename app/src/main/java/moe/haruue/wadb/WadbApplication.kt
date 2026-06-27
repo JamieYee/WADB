@@ -15,7 +15,6 @@ import moe.haruue.wadb.util.NetworksUtils
 import moe.haruue.wadb.util.NotificationHelper.cancelNotification
 import moe.haruue.wadb.util.NotificationHelper.showNotification
 import moe.haruue.wadb.util.ScreenKeeper
-import rikka.material.app.DayNightDelegate
 import rikka.sui.Sui
 
 lateinit var wadbApplication: WadbApplication
@@ -61,8 +60,6 @@ class WadbApplication : Application(), WadbStateChangedEvent, WadbFailureEvent {
     override fun onCreate() {
         super.onCreate()
         Events.registerAll(this)
-        DayNightDelegate.setApplicationContext(this)
-        DayNightDelegate.setDefaultNightMode(DayNightDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }
 
     override fun onWadbStarted(port: Int) {

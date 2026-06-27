@@ -35,16 +35,16 @@ object NotificationHelper {
         // so we still have to use light color here
         val color: Int = when (ThemeHelper.getTheme()) {
             ThemeHelper.THEME_GREEN -> {
-                context.getColor(R.color.md_theme_green_palette_primary_50)
+                0xFF88B984.toInt()
             }
             ThemeHelper.THEME_PINK -> {
-                context.getColor(R.color.md_theme_pink_palette_primary_50)
+                0xFFF5A9B8.toInt()
             }
             else -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     context.getColor(android.R.color.system_accent1_500)
                 } else {
-                    context.getColor(R.color.md_theme_green_palette_primary_50)
+                    0xFF88B984.toInt()
                 }
             }
         }

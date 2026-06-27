@@ -1,19 +1,12 @@
-package moe.haruue.wadb.receiver;
+package moe.haruue.wadb.receiver
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import moe.haruue.wadb.events.GlobalRequestHandler
 
-import moe.haruue.wadb.events.GlobalRequestHandler;
-
-public class TurnOffReceiver extends BroadcastReceiver {
-
-    public TurnOffReceiver() {
+class TurnOffReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        GlobalRequestHandler.stopWadb()
     }
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        GlobalRequestHandler.stopWadb();
-    }
-
 }

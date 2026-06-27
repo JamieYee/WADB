@@ -12,6 +12,7 @@ import java.util.List;
 
 import moe.haruue.wadb.BuildConfig;
 
+@SuppressWarnings("deprecation")
 public class SuShell {
 
     static {

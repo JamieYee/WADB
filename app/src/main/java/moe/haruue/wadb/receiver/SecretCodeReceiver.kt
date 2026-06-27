@@ -1,18 +1,15 @@
-package moe.haruue.wadb.receiver;
+package moe.haruue.wadb.receiver
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.provider.Telephony;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.telephony.TelephonyManager
+import moe.haruue.wadb.component.HomeActivity
 
-import moe.haruue.wadb.component.HomeActivity;
-
-public class SecretCodeReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        if (Telephony.Sms.Intents.SECRET_CODE_ACTION.equals(intent.getAction())) {
-            context.startActivity(new Intent(context, HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+class SecretCodeReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (TelephonyManager.ACTION_SECRET_CODE == intent.action) {
+            context.startActivity(Intent(context, HomeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
     }
 }
