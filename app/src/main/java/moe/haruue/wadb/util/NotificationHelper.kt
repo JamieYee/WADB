@@ -1,5 +1,6 @@
 package moe.haruue.wadb.util
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,6 +11,7 @@ import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import moe.haruue.wadb.R
 import moe.haruue.wadb.WadbApplication
 import moe.haruue.wadb.WadbPreferences
@@ -23,6 +25,11 @@ object NotificationHelper {
 
     @JvmStatic
     fun showNotification(context: Context, ip: String, port: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val notificationManager = context.getSystemService(NotificationManager::class.java) ?: return
         val contentPendingIntent = PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val turnOffIntent = Intent("moe.haruue.wadb.action.TURN_OFF_WADB").apply { component = ComponentName(context, TurnOffReceiver::class.java) }

@@ -1,5 +1,6 @@
 package moe.haruue.wadb.component
 
+import android.Manifest
 import android.app.ActivityManager
 import android.content.Intent
 import android.content.SharedPreferences
@@ -11,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -93,6 +95,24 @@ class HomeActivity : ComponentActivity(), WadbStateChangedEvent, WadbFailureEven
     private var showRootDialog by mutableStateOf(false)
     private var showHideIconDialog by mutableStateOf(false)
     private var showAboutDialog by mutableStateOf(false)
+    private var pendingStartWadbPort: String? = null
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                preferences.edit().putBoolean(WadbPreferences.KEY_NOTIFICATION, true).apply()
+                pendingStartWadbPort?.let(::startWadbNow)
+                if (wadbActive) {
+                    GlobalRequestHandler.checkWadbState()
+                }
+            } else {
+                preferences.edit().putBoolean(WadbPreferences.KEY_NOTIFICATION, false).apply()
+                pendingStartWadbPort?.let(::startWadbNow)
+                Toast.makeText(this, R.string.toast_notification_permission_denied, Toast.LENGTH_SHORT).show()
+            }
+            pendingStartWadbPort = null
+            refreshPreferenceState()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -121,7 +141,7 @@ class HomeActivity : ComponentActivity(), WadbStateChangedEvent, WadbFailureEven
                     currentTheme = currentTheme,
                     onToggleWadb = ::setWadbEnabled,
                     onEditPort = { showPortDialog = true },
-                    onShowNotificationChange = { setBooleanPreference(WadbPreferences.KEY_NOTIFICATION, it) },
+                    onShowNotificationChange = ::setNotificationEnabled,
                     onLowPriorityNotificationChange = {
                         setBooleanPreference(WadbPreferences.KEY_NOTIFICATION_LOW_PRIORITY, it)
                     },
@@ -276,7 +296,10 @@ class HomeActivity : ComponentActivity(), WadbStateChangedEvent, WadbFailureEven
     private fun setWadbEnabled(enabled: Boolean) {
         operationEnabled = false
         if (enabled) {
-            GlobalRequestHandler.startWadb(WadbApplication.wadbPort)
+            val port = WadbApplication.wadbPort
+            if (ensureNotificationPermissionBeforeStart(port)) {
+                startWadbNow(port)
+            }
         } else {
             GlobalRequestHandler.stopWadb()
         }
@@ -293,12 +316,43 @@ class HomeActivity : ComponentActivity(), WadbStateChangedEvent, WadbFailureEven
         portText = parsed.toString()
         if (wadbActive) {
             operationEnabled = false
-            GlobalRequestHandler.startWadb(parsed.toString())
+            if (ensureNotificationPermissionBeforeStart(parsed.toString())) {
+                startWadbNow(parsed.toString())
+            }
         }
     }
 
     private fun setBooleanPreference(key: String, value: Boolean) {
         preferences.edit().putBoolean(key, value).apply()
+    }
+
+    private fun setNotificationEnabled(enabled: Boolean) {
+        if (enabled && !hasNotificationPermission()) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            return
+        }
+        setBooleanPreference(WadbPreferences.KEY_NOTIFICATION, enabled)
+        if (!enabled) {
+            NotificationHelper.cancelNotification(this)
+        }
+    }
+
+    private fun ensureNotificationPermissionBeforeStart(port: String): Boolean {
+        if (!preferences.getBoolean(WadbPreferences.KEY_NOTIFICATION, true) || hasNotificationPermission()) {
+            return true
+        }
+        pendingStartWadbPort = port
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        return false
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun startWadbNow(port: String) {
+        GlobalRequestHandler.startWadb(port)
     }
 
     private fun updateStartOnBoot(enabled: Boolean) {
